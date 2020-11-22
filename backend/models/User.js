@@ -31,9 +31,25 @@ const UserSchema = new Schema({
 
 UserSchema.pre('save', async function (next) {
     if(!this.isModified('password')) return next();
-    const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
+    try {
+        const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (e) {
+        return next(e);
+    }
+});
+
+UserSchema.pre('findOneAndUpdate', async function (next) {
+    const password = this._update.password;
+    if(!password) return next();
+    try {
+        const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
+        this._update.password = await bcrypt.hash(password, salt);
+        next();
+    } catch (e) {
+        return next(e);
+    }
 });
 
 UserSchema.set('toJSON', {

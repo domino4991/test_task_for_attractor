@@ -22,8 +22,8 @@ router.get('/', async (req, res) => {
     try {
         const articles = await Article
             .find()
-            .populate('category')
-            .populate('user', 'username -_id')
+            .populate('category_id')
+            .populate('user_id', 'username -_id')
             .limit(20);
         if(articles.length === 0) return res.status(404).send({error: 'Ни одной новости еще не добавлено'});
         return res.send(articles);
@@ -36,8 +36,8 @@ router.get('/:id', async (req, res) => {
     try {
         const article = await Article
             .findById(req.params.id)
-            .populate('category')
-            .populate('user', 'username -_id');
+            .populate('category_id')
+            .populate('user_id', 'username -_id');
         if(!article) return res.status(404).send({error: 'Новость не найдена'});
         return res.send(article);
     } catch (e) {
@@ -63,7 +63,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
     try {
         const updatedArticle = await Article.findOneAndUpdate({
             _id: req.params.id,
-            user: req.user._id
+            user_id: req.user._id
         }, {...req.body}, {new: true});
         if(!updatedArticle) return res.status(404).send({error: 'Редактируемая новость не найдена'});
         return res.send({message: 'Новость успешно отредактированна'});
@@ -76,7 +76,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const article = await Article.findOneAndRemove({
             _id: req.params.id,
-            user: req.user._id
+            user_id: req.user._id
         });
         if(!article) return res.status(403).send({error: 'У вас нет прав для удаления этой новости'});
         return res.send({message: `Новость "${article.title}" удалена`});

@@ -27,6 +27,8 @@ const UserSchema = new Schema({
         type: String,
         required: true
     }
+}, {
+    versionKey: false
 });
 
 UserSchema.pre('save', async function (next) {

@@ -7,6 +7,8 @@ const CategorySchema = new Schema({
         type: String,
         required: [true, 'Поле "Наименование категории" не должно быть пустым']
     }
+}, {
+    versionKey: false
 });
 
 const Category = mongoose.model('Category', CategorySchema);

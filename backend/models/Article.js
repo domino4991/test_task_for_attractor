@@ -26,6 +26,8 @@ const ArticleSchema = new Schema({
         type: String,
         required: [true, 'Поле "Изображение" не должно быть пустым']
     }
+}, {
+    versionKey: false
 });
 
 const Article = mongoose.model('Article', ArticleSchema);

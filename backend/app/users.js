@@ -2,6 +2,26 @@ const router = require('express').Router();
 const User = require('../models/User');
 const authMiddleware = require('../authMiddleware');
 
+router.get('/', authMiddleware, async (req, res) => {
+    try {
+        const users = await User.find().select('username -_id');
+        if(users.length === 0) return res.status(404).send({error: 'Нет зарегистрированных пользователей'});
+        return res.send(users);
+    } catch (e) {
+        return res.status(500).send({error: 'Eternal Server Error'});
+    }
+});
+
+router.get('/:id', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('username -_id');
+        if(!user) return res.status(404).send({error: 'Пользователь не найден'});
+        return res.send(user);
+    } catch (e) {
+        return res.status(500).send({error: 'Eternal Server Error'});
+    }
+});
+
 router.post('/', async (req, res) => {
     try {
         const user = new User(req.body);

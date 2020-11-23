@@ -5,6 +5,7 @@ const config = require('./config');
 
 const users = require('./app/users');
 const categories = require('./app/categories');
+const articles = require('./app/articles');
 
 const app = express();
 const PORT = 8000;
@@ -20,6 +21,7 @@ const run = async () => {
 
     app.use('/users', users);
     app.use('/categories', categories);
+    app.use('/articles', articles);
     app.use((req, res) => {
         res.status(404).send({error: '404 Not Found'});
     });

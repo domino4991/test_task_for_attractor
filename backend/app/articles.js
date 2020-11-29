@@ -3,7 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const {nanoid} = require('nanoid');
 const config = require('../config');
-const authMiddleware = require('../authMiddleware');
+const authMiddleware = require('../middlewares/authMiddleware');
+const permit = require('../middlewares/permit');
 
 const Article = require('../models/Article');
 
@@ -19,12 +20,21 @@ const storage = multer.diskStorage({
 const upload = multer({storage});
 
 router.get('/', async (req, res) => {
+    let articles;
     try {
-        const articles = await Article
-            .find()
-            .populate('category_id')
-            .populate('user_id', 'username -_id')
-            .limit(20);
+        if(req.query.category) {
+            articles = await Article
+                .find({category_id: req.query.category})
+                .populate('category_id')
+                .populate('user_id', 'username -_id')
+                .limit(20);
+        } else {
+            articles = await Article
+                .find()
+                .populate('category_id')
+                .populate('user_id', 'username -_id')
+                .limit(20);
+        }
         if(articles.length === 0) return res.status(404).send({error: 'Ни одной новости еще не добавлено'});
         return res.send(articles);
     } catch (e) {
@@ -45,13 +55,17 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
+router.post('/', [authMiddleware, permit('admin')], upload.single('image'), async (req, res) => {
     try {
-        const article = new Article(req.body);
+        const article = new Article({
+            title: req.body.title,
+            description: req.body.description,
+            category_id: req.body.category
+        });
         if(req.file) {
             article.image = req.file.filename;
         }
-        article.user = req.user._id;
+        article.user_id = req.user._id;
         await article.save();
         return res.send({message: 'Новость создана'});
     } catch (e) {
@@ -59,12 +73,14 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     }
 });
 
-router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
+router.put('/:id', [authMiddleware, permit('admin')], upload.single('image'), async (req, res) => {
     try {
+        if(req.file) {
+            req.body.image = req.file.filename;
+        }
         const updatedArticle = await Article.findOneAndUpdate({
-            _id: req.params.id,
-            user_id: req.user._id
-        }, {...req.body}, {new: true});
+            _id: req.params.id
+        }, {...req.body, category_id: req.body.category}, {new: true});
         if(!updatedArticle) return res.status(404).send({error: 'Редактируемая новость не найдена'});
         return res.send({message: 'Новость успешно отредактированна'});
     } catch (e) {
@@ -72,13 +88,12 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
     }
 });
 
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', [authMiddleware, permit('admin')], async (req, res) => {
     try {
         const article = await Article.findOneAndRemove({
-            _id: req.params.id,
-            user_id: req.user._id
+            _id: req.params.id
         });
-        if(!article) return res.status(403).send({error: 'У вас нет прав для удаления этой новости'});
+        if(!article) return res.status(404).send({error: 'Новость не найдена.'});
         return res.send({message: `Новость "${article.title}" удалена`});
     } catch (e) {
         return res.status(500).send({error: 'Eternal Server Error'});

@@ -27,16 +27,19 @@ db.once('open', async () => {
         });
 
         const [john, sam, ivan] = await User.create({
-           username: 'john',
-           password: 'testpass',
-           token: nanoid()
+            username: 'john',
+            password: 'testpass',
+            role: 'admin',
+            token: nanoid()
         }, {
             username: 'sam',
             password: 'testpass',
+            role: 'user',
             token: nanoid()
         }, {
             username: 'ivan',
             password: 'testpass',
+            role: 'user',
             token: nanoid()
         });
         await Article.create({

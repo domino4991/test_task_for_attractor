@@ -137,7 +137,12 @@ export const deleteUser = id => {
             dispatch(deleteUserSuccess());
         } catch (e) {
             if(e.response && e.response.data) {
-                dispatch(deleteUserError(e.response.data.error));
+                if(e.response.data.error.errors) {
+                    dispatch(deleteUserError(e.response.data));
+                } else {
+                    toast.success(e.response.data.error);
+                    dispatch(deleteUserError(null));
+                }
             } else {
                 dispatch(deleteUserError(e.message));
             }
